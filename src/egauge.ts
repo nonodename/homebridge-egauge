@@ -16,11 +16,11 @@ function generateRandomHex(size: number): string {
   return randomHex;
 }
 
-export interface SensorArray {
+/*export interface SensorArray {
     [key:string]:number;
-}
+}*/
 export class eGaugeAPI {
-  public Sensors:SensorArray[] = [];
+  public Sensors:{[name:string]:number} = {};
 
   private URLbase:string;
   private _jwt='';
@@ -47,7 +47,17 @@ export class eGaugeAPI {
   ) {
     this.URLbase = 'http://'+server;
     this.log.debug('Server = '+this.URLbase);
-    this.getJWTToken();
+  }
+
+  public async discoverDevice(){
+    try{
+      await this.getJWTToken();
+      await Promise.all([this.readRegisters(), this.getHostname(), this.getDeviceName()]);
+      this.log.debug('Done discovery with nodename :' + this._hostname);
+      return true;
+    } catch (error){
+      return false;
+    }
   }
 
   private async getHostname(){
@@ -97,14 +107,15 @@ export class eGaugeAPI {
     }
     const readEndPoint = this.URLbase+'/api/register?reg=1+2+3+4+5+6+7+8&rate';
     const headers = {'Authorization':'Bearer '+this._jwt};
-
+    let debug = '';
     try{
       const response:AxiosResponse = await axios.get(readEndPoint, {headers});
       const responseData:RegisterResponse = response.data;
       for(const register of responseData.registers){
-        this.log.debug('name: '+register.name+ ' rate: '+register.rate);
         this.Sensors[register.name]=register.rate;
+        debug += register.name+ ': '+register.rate+', ';
       }
+      this.log.debug(debug);
     } catch (err: unknown){
       if(axios.isAxiosError(err)){
         this.log.error(err.message);
@@ -136,10 +147,8 @@ export class eGaugeAPI {
       });
       const tokenResponseData: JWTResponse = tokenResponse.data;
       this._jwt = tokenResponseData.jwt;
+
       //this.log.debug('JWT: ' + this._jwt);
-      this.readRegisters();
-      this.getHostname();
-      this.getDeviceName();
     } catch (err: unknown){
       if(axios.isAxiosError(err)){
         this.log.error(err.message);
