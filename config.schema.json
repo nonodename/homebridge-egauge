@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "HomeBridgeEgauge",
   "pluginType": "platform",
   "singular": true,
   "schema": {
@@ -9,7 +9,23 @@
         "title": "Name",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "default": "eGauge Energy Sensor"
+      }, 
+      "server":{
+        "title": "Server IP",
+        "type": "string",
+        "required": true,
+        "default": "192.168.1.1"    
+      },
+      "username":{
+        "title": "Username",
+        "type": "string",
+        "required": true 
+      },
+      "password":{
+        "title": "Password",
+        "type": "string",
+        "required": true   
       }
     }
   }
