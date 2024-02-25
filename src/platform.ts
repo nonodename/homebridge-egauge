@@ -22,6 +22,7 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
     let server = '';
     let username = '';
     let password = '';
+    let readRegisters = '';
     Object.entries(config).forEach((entry) => {
       const [key, val] = entry;
       switch (key) {
@@ -34,12 +35,18 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
         case 'password':
           password = val;
           break;
+        case 'registers':
+          readRegisters = val;
+          break;
       }
     });
     this._eAPI = new eGaugeAPI(server, username, password, log);
     this.log.debug('Finished initializing platform:', this.config.name);
-
-
+    if(readRegisters.length>1){
+      this._eAPI.RequiredRegisters = readRegisters.split(',');
+    } else {
+      this._eAPI.RequiredRegisters = [];
+    }
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
       this._eAPI.discoverDevice().then(() => {
@@ -59,37 +66,48 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
+
+
   /**
    * Map the current device (or create it) to the accessory cache
    */
   discoverDevices() {
     this.log.debug('Discovering devices');
-    // unique ID based on hostname
-    const uuid = this.api.hap.uuid.generate(this._eAPI.hostname);
+    for (const sensorIDX in this._eAPI.Sensors){
+      const sensorName = this._eAPI.Sensors[sensorIDX].name;
+      // unique ID based on hostname & register ID
+      const uuid = this.api.hap.uuid.generate(this._eAPI.hostname+sensorIDX);
+      // see if an accessory with the same uuid has already been registered and restored from
+      // the cached devices we stored in the `configureAccessory` method above
+      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-    // see if an accessory with the same uuid has already been registered and restored from
-    // the cached devices we stored in the `configureAccessory` method above
-    const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
-
-    if (existingAccessory) {
+      if (existingAccessory) {
       // the accessory already exists
-      this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
-      new eGaugePlatformAccessory(this, existingAccessory, this._eAPI);
+        new eGaugePlatformAccessory(this, existingAccessory, this._eAPI, sensorIDX);
+        if(!this._eAPI.requiredRegister(sensorIDX)){
+          this.log.debug('Unregistered item with idx: '+sensorIDX);
+          this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
+        }
+      } else {
+        if(this._eAPI.requiredRegister(sensorIDX)){
+          // the accessory does not yet exist, so we need to create it
+          this.log.info('Adding new accessory:', this._eAPI.hostname+sensorIDX);
 
-    } else {
-      // the accessory does not yet exist, so we need to create it
-      this.log.info('Adding new accessory:', this._eAPI.hostname);
+          // create a new accessory
+          const accessory = new this.api.platformAccessory(this._eAPI.hostname+sensorIDX, uuid);
 
-      // create a new accessory
-      const accessory = new this.api.platformAccessory(this._eAPI.hostname, uuid);
+          accessory.context.device = this._eAPI.hostname+sensorIDX;
 
-      accessory.context.device = this._eAPI.hostname;
+          new eGaugePlatformAccessory(this, accessory, this._eAPI, sensorIDX);
 
-      new eGaugePlatformAccessory(this, accessory, this._eAPI);
-
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+          this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        }
+      }
     }
+
+
   }
 }
 

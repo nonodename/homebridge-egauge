@@ -26,6 +26,11 @@
         "title": "Password",
         "type": "string",
         "required": true   
+      },
+      "registers":{
+        "title": "Registers to Read",
+        "type": "string",
+        "required": false   
       }
     }
   }

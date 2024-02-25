@@ -12,12 +12,20 @@
 
 This Homebridge plugin integrates information from [eGauge](https://www.egauge.net) devices hosted on the same network as your Homebridge. The plugin uses the eGauge [WebAPI](https://webapi.redoc.ly) and has been tested with version 4.5 of the API running on a EG4115 device.
 
-Sensors on the device are represented as AmbientLight sensors in Apple Homekit.
+Sensors on the device are represented as ambient light sensors & light bulbs in Apple Homekit.
+
+Consumption/production data in W is represented as the ambient light. Read registers are summed and the rate for each register is represented as a % brightness. Bulbs will show as on if the associated register is returning > 1W. 
+
+If it's working correctly, at night the lightbulb associated with the solar register should show as off and the grid 'bulb' should show on and 100%.
+
+To control which registers are read, add a comma separated list of the registers in the 'Registers to Read' field of config. If left blank the first eight registers will be read.
+
+Hat Tip to [Ryan Seddon](https://twitter.com/ryanseddon) for the [idea](https://ryanseddon.com/renewables/virtual-lightbulbs-solar-homekit/) of presenting the data using lightbulbs and light sensors. 
 
 ### Known issues
 
 * The plugin has not been tested against the eGauge reverse proxy.
-* Currently utilization truncates at 10kw (represented as max light, 10000 lumens). 
+* Currently utilization truncates at 100kw (represented as max light, 100000 lumens). 
 * Only the first 8 registers are supported
 
 ## Building

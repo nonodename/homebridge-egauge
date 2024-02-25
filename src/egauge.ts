@@ -18,10 +18,34 @@ type ModelResponse = {result:Model};
 
 export class eGaugeAPI {
   public Sensors:{[idx:string]:Register} = {};
-
+  private _requiredRegisters:string[]=[];
+  private _readParams = '';
+  private _registerSum = 0;
   private URLbase:string;
   private _jwt='';
   private _hostname = '';
+  public requiredRegister(idx:string):boolean {
+    return (this._requiredRegisters.length < 1 || this._requiredRegisters.includes(idx));
+  }
+
+  public get RegisterSum():number{
+    return this._registerSum;
+  }
+
+  public set RequiredRegisters(reg:string[]){
+    this._requiredRegisters = reg;
+
+    if(reg.length < 1){
+      this._readParams = '1+2+3+4+5+6+7+8&rate';
+    } else {
+      this._readParams = reg[0];
+      for(let i = 1; i< reg.length; i++){
+        this._readParams += '+'+reg[i];
+      }
+      this._readParams += '&rate';
+    }
+  }
+
   public get hostname() {
     return this._hostname;
   }
@@ -54,7 +78,11 @@ export class eGaugeAPI {
   public async discoverDevice(){
     try{
       await this.getJWTToken();
+      // temporarily switch out the registers we read to discover all configured
+      const tempReadParams = this._readParams;
+      this._readParams = '1+2+3+4+5+6+7+8&rate';
       await Promise.all([this.readRegisters(), this.getHostname(), this.getDeviceName()]);
+      this._readParams = tempReadParams;
       this.log.debug('Done discovery with nodename :' + this._hostname);
       setInterval(() => {
         this.getJWTToken();
@@ -82,7 +110,7 @@ export class eGaugeAPI {
           this.log.error(err.message);
         }
       } else {
-        this.log.error('Error calling unauthorized API at '+this.URLbase+' '+err);
+        this.log.error('Error calling API at '+endPoint+' '+err);
       }
     }
   }
@@ -105,44 +133,19 @@ export class eGaugeAPI {
   }
 
   public async readRegisters(){
-    await this.callAPI(this.URLbase+'/api/register?reg=1+2+3+4+5+6+7+8&rate', (response) =>{
+    await this.callAPI(this.URLbase+'/api/register?reg='+this._readParams, (response) =>{
       const responseData:RegisterResponse = response.data;
       let debug = '';
+      let registerSum=0;
       for(const register of responseData.registers){
         this.Sensors[register.idx]=register;
+        registerSum+=register.rate;
         debug += register.idx+ ': '+register.rate+', ';
       }
+      this._registerSum = registerSum;
       this.log.debug(debug);
     });
   }
-  /*public async readRegisters(){
-    if(this._jwt === null){
-      return;
-    }
-    const readEndPoint = this.URLbase+'/api/register?reg=1+2+3+4+5+6+7+8&rate';
-    const headers = {'Authorization':'Bearer '+this._jwt};
-    let debug = '';
-    try{
-      const response:AxiosResponse = await axios.get(readEndPoint, {headers});
-      const responseData:RegisterResponse = response.data;
-      for(const register of responseData.registers){
-        this.Sensors[register.idx]=register;
-        debug += register.idx+ ': '+register.rate+', ';
-      }
-      this.log.debug(debug);
-    } catch (err: unknown){
-      if(axios.isAxiosError(err)){
-        if(err.status === 401){ // the JWT token timed out (which shouldn't happen)
-          this.getJWTToken();
-          this.log.warn('Had to generate JWT token within register read');
-        } else {
-          this.log.error(err.message);
-        }
-      } else {
-        this.log.error('Error calling read registers API at '+this.URLbase+' '+err);
-      }
-    }
-  }*/
 
   public async getJWTToken(){
     const unAuthEndPoint = this.URLbase+'/api/auth/unauthorized';
@@ -167,7 +170,6 @@ export class eGaugeAPI {
       const tokenResponseData: JWTResponse = tokenResponse.data;
       this._jwt = tokenResponseData.jwt;
       this.log.debug('Refreshed JWT token');
-      //this.log.debug('JWT: ' + this._jwt);
     } catch (err: unknown){
       if(axios.isAxiosError(err)){
         this.log.error(err.message);
