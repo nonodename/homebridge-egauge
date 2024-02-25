@@ -74,7 +74,6 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
   discoverDevices() {
     this.log.debug('Discovering devices');
     for (const sensorIDX in this._eAPI.Sensors){
-      const sensorName = this._eAPI.Sensors[sensorIDX].name;
       // unique ID based on hostname & register ID
       const uuid = this.api.hap.uuid.generate(this._eAPI.hostname+sensorIDX);
       // see if an accessory with the same uuid has already been registered and restored from
