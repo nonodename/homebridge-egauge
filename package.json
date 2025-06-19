@@ -12,8 +12,8 @@
     "url": "https://github.com/nonodename/homebridge-egauge/issues"
   },
   "engines": {
-    "node": "^18.17.0 || ^20.9.0",
-    "homebridge": "^1.6.0"
+    "node": ">20.9.0",
+    "homebridge": ">1.10.0"
   },
   "main": "dist/index.js",
   "scripts": {

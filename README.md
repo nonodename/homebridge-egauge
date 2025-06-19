@@ -65,6 +65,10 @@ You can now start Homebridge, use the `-D` flag, so you can see debug log messag
 ```shell
 $ homebridge -D
 ```
+Insecure mode is helpful for debugging
+```
+$ homebridge -I
+```
 
 ### Watch For Changes and Build Automatically
 
@@ -99,3 +103,5 @@ This will launch an instance of Homebridge in debug mode which will restart ever
 ### Useful Links
 Note these links are here for help but are not supported/verified by the Homebridge team
 - [Custom Characteristics](https://github.com/homebridge/homebridge-plugin-template/issues/20)
+- [Set node version on mac/homebrew](https://medium.com/@georgeenathomas/3-step-process-to-downgrade-node-version-using-homebrew-bc0b0a72ae27)
+- [Manage homebridge versions](https://github.com/homebridge/homebridge-config-ui-x/wiki/How-To-Test-Upcoming-Changes)
