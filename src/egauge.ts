@@ -1,5 +1,5 @@
 /**
- * Minimal implementation of the eGuage API described at https://webapi.redoc.ly/v4.5/tag/Introduction
+ * Minimal implementation of the eGauge API described at https://webapi.redoc.ly/v4.5/tag/Introduction
  * Uses JWT based authentication, so will work over HTTP
 */
 
