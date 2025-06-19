@@ -1,7 +1,7 @@
 {
   "displayName": "eGauge",
   "name": "homebridge-egauge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Surface energy usage from eGauge devices as light sensor",
   "license": "Apache-2.0",
   "repository": {
@@ -12,8 +12,8 @@
     "url": "https://github.com/nonodename/homebridge-egauge/issues"
   },
   "engines": {
-    "node": ">20.9.0",
-    "homebridge": ">1.10.0"
+    "node": "^18.20.4 || ^20.15.1 || ^22",
+    "homebridge": "^1.10.0 || ^2.0.0-beta.0"
   },
   "main": "dist/index.js",
   "scripts": {
