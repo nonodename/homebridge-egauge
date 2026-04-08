@@ -25,6 +25,9 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
     let readRegisters = '';
     Object.entries(config).forEach((entry) => {
       const [key, val] = entry;
+      if(typeof val !== 'string'){
+        return;
+      }
       switch (key) {
         case 'server':
           server = val;
@@ -51,6 +54,7 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback');
       this._eAPI.discoverDevice().then(() => {
         this.discoverDevices();
+        this._eAPI.startPolling();
       });
     });
   }

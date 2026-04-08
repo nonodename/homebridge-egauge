@@ -10,6 +10,7 @@ export class eGaugePlatformAccessory {
   private _service: Service;
   private _sensorService: Service;
   private _index:string;
+  private _pollInterval?: NodeJS.Timeout;
 
   constructor(
     private readonly platform: HomebridgeEGaugePlatform,
@@ -36,7 +37,7 @@ export class eGaugePlatformAccessory {
       .onSet(this.setOn.bind(this))
       .onGet(this.getOn.bind(this));
 
-    setInterval(() => {
+    this._pollInterval = setInterval(() => {
       const sensorValue = this._eAPI.Sensors[this._index].rate;
 
       if(sensorValue < 0.0001){
@@ -47,15 +48,14 @@ export class eGaugePlatformAccessory {
         this._sensorService.updateCharacteristic(this.platform.Characteristic.CurrentAmbientLightLevel, sensorValue);
       }
 
-      const sensorPercent = sensorValue/this._eAPI.RegisterSum*100;
-      if(isNaN(sensorPercent) || sensorPercent < 0){
+      const sensorPercent = this._eAPI.RegisterSum > 0 ? sensorValue/this._eAPI.RegisterSum*100 : 0;
+      if(sensorPercent < 0){
         this._service.updateCharacteristic(this.platform.Characteristic.Brightness, 0);
       } else if(sensorPercent > 100){
         this._service.updateCharacteristic(this.platform.Characteristic.Brightness, 100);
       } else {
         this._service.updateCharacteristic(this.platform.Characteristic.Brightness, sensorPercent);
       }
-      this._eAPI.readRegisters();
     }, 10000);
   }
 

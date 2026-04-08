@@ -60,6 +60,10 @@ export class eGaugeAPI {
     return this._sn;
   }
 
+  private _jwtRefreshInterval?: NodeJS.Timeout;
+  private _pollInterval?: NodeJS.Timeout;
+  private _failCount = 0;
+
   private static generateRandomHex(size: number): string {
     const randomHex = [...Array(size)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
     return randomHex;
@@ -84,7 +88,10 @@ export class eGaugeAPI {
       await Promise.all([this.readRegisters(), this.getHostname(), this.getDeviceName()]);
       this._readParams = tempReadParams;
       this.log.debug('Done discovery with nodename :' + this._hostname);
-      setInterval(() => {
+      if(this._jwtRefreshInterval){
+        clearInterval(this._jwtRefreshInterval);
+      }
+      this._jwtRefreshInterval = setInterval(() => {
         this.getJWTToken();
       }, 540000);    // call refresh JWT every 9 minutes per eGauge docs of 10 min timeout
       return true;
@@ -93,19 +100,40 @@ export class eGaugeAPI {
     }
   }
 
+  public startPolling(){
+    if(this._pollInterval){
+      clearInterval(this._pollInterval);
+    }
+    this._pollInterval = setInterval(() => {
+      this.readRegisters();
+    }, 10000);
+  }
+
   private async callAPI(endPoint:string, fn: (response:AxiosResponse) => void){
-    if(this._jwt === null){
+    if(this._jwt === ''){
+      return;
+    }
+    if(this._failCount > 5){
       return;
     }
     const headers = {'Authorization':'Bearer '+this._jwt};
     try{
       const response:AxiosResponse = await axios.get(endPoint, {headers});
+      this._failCount = 0;
       fn(response);
     } catch (err: unknown){
+      this._failCount++;
       if(axios.isAxiosError(err)){
         if(err.status === 401){ // the JWT token timed out (which shouldn't happen)
-          this.getJWTToken();
+          await this.getJWTToken();
           this.log.warn('Had to generate JWT token within callAPI');
+          try{
+            const retryResponse:AxiosResponse = await axios.get(endPoint, {headers:{'Authorization':'Bearer '+this._jwt}});
+            this._failCount = 0;
+            fn(retryResponse);
+          } catch (retryErr: unknown){
+            this.log.error('Retry after 401 failed at '+endPoint);
+          }
         } else {
           this.log.error(err.message);
         }
