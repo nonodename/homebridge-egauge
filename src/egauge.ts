@@ -5,7 +5,7 @@
 
 import {Md5} from 'ts-md5';
 import axios, { AxiosResponse } from 'axios';
-import {Logger} from 'homebridge';
+import type {Logger} from 'homebridge';
 
 type UnAuthorizedResponse = {rlm:string; nnc:string; error:string};
 type JWTResponse = {jwt:string; rights:string};

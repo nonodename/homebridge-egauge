@@ -1,9 +1,10 @@
 {
   "displayName": "eGauge",
   "name": "homebridge-egauge",
-  "version": "1.1.1",
-  "description": "Surface energy usage from eGauge devices as light sensor",
+  "version": "1.2.0",
+  "description": "Surface energy usage from eGauge devices as light sensors, or as Matter electrical sensors on Homebridge 2",
   "license": "Apache-2.0",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nonodename/homebridge-egauge.git"
@@ -23,7 +24,10 @@
     "prepublishOnly": "npm run lint && npm run build"
   },
   "keywords": [
-    "homebridge-plugin"
+    "homebridge-plugin",
+    "egauge",
+    "energy",
+    "matter"
   ],
   "dependencies": {
     "axios": "^1.6.7",
@@ -34,10 +38,10 @@
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.45.0",
-    "homebridge": "^1.10.0",
+    "homebridge": "^2.4.0",
     "nodemon": "^3.1.14",
     "rimraf": "^3.0.2",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.3"
   }
 }

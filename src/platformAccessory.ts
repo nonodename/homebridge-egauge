@@ -1,6 +1,6 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { HomebridgeEGaugePlatform } from './platform';
-import { eGaugeAPI } from './egauge';
+import type { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
+import { HomebridgeEGaugePlatform } from './platform.js';
+import { eGaugeAPI } from './egauge.js';
 
 /**
  * Implementation of the platform accessory. A sensor will be created for each register that
