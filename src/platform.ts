@@ -96,6 +96,14 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
    */
   discoverDevices() {
     this.log.debug('Discovering devices');
+    if (!this._exposeHap) {
+      // HAP sensors disabled: remove every restored accessory, not just ones matching current registers
+      if (this.accessories.length > 0) {
+        this.log.info('HAP sensors disabled, removing cached accessories: ' + this.accessories.map(a => a.displayName).join(', '));
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories);
+      }
+      return;
+    }
     for (const sensorIDX in this._eAPI.Sensors){
       // unique ID based on hostname & register ID
       const uuid = this.api.hap.uuid.generate(this._eAPI.hostname+sensorIDX);
@@ -104,16 +112,16 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
       if (existingAccessory) {
-      // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
-
-        new eGaugePlatformAccessory(this, existingAccessory, this._eAPI, sensorIDX);
-        if(!this._exposeHap || !this._eAPI.requiredRegister(sensorIDX)){
-          this.log.debug('Unregistered item with idx: '+sensorIDX);
+        if(!this._eAPI.requiredRegister(sensorIDX)){
+          this.log.debug('Unregistering item with idx: '+sensorIDX);
           this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
+        } else {
+          // the accessory already exists
+          this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+          new eGaugePlatformAccessory(this, existingAccessory, this._eAPI, sensorIDX);
         }
       } else {
-        if(this._exposeHap && this._eAPI.requiredRegister(sensorIDX)){
+        if(this._eAPI.requiredRegister(sensorIDX)){
           // the accessory does not yet exist, so we need to create it
           this.log.info('Adding new accessory:', this._eAPI.hostname+sensorIDX);
 
@@ -137,8 +145,20 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
    */
   async discoverMatterDevices() {
     const matter = this.api.matter;
-    if (!this._exposeMatter || !this.api.isMatterEnabled?.() || !matter) {
+    if (!this.api.isMatterEnabled?.() || !matter) {
       this.log.debug('Matter not enabled, skipping Matter accessories');
+      return;
+    }
+    if (!this._exposeMatter) {
+      // Matter sensors disabled: remove every restored accessory, not just ones matching current registers
+      if (this.matterAccessories.length > 0) {
+        this.log.info('Matter sensors disabled, removing cached accessories: ' + this.matterAccessories.map(a => a.displayName).join(', '));
+        try {
+          await matter.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.matterAccessories);
+        } catch (err: unknown) {
+          this.log.error('Failed to unregister Matter accessories: ' + err);
+        }
+      }
       return;
     }
     const wanted: eGaugeMatterAccessory[] = [];
