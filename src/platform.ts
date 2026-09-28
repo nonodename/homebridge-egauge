@@ -178,10 +178,34 @@ export class HomebridgeEGaugePlatform implements DynamicPlatformPlugin {
         await matter.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, stale);
       }
       // registering a cached accessory re-attaches it, so register everything we want every launch
-      await matter.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, wanted.map(w => w.accessory));
+      await this.registerMatterAccessoriesWithRetry(matter, wanted.map(w => w.accessory));
       wanted.forEach(w => w.startPolling());
     } catch (err: unknown) {
       this.log.error('Failed to register Matter accessories: ' + err);
+    }
+  }
+
+  /**
+   * The bridge's Matter server can still be starting up when didFinishLaunching fires, in which case
+   * registerPlatformAccessories rejects with a transient "still starting" error (per Homebridge's own
+   * message, the accessories are safe and simply need a retry). Retry a few times with backoff before
+   * giving up.
+   */
+  private async registerMatterAccessoriesWithRetry(matter: NonNullable<API['matter']>, accessories: MatterAccessory[]): Promise<void> {
+    const maxAttempts = 5;
+    const retryDelayMs = 2000;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await matter.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, accessories);
+        return;
+      } catch (err: unknown) {
+        const stillStarting = err instanceof Error && err.message.includes('still starting');
+        if (!stillStarting || attempt === maxAttempts) {
+          throw err;
+        }
+        this.log.debug(`Matter server still starting, retrying registration (attempt ${attempt}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+      }
     }
   }
 }
