@@ -31,6 +31,18 @@
         "title": "Registers to Read",
         "type": "string",
         "required": false   
+      },
+      "hap":{
+        "title": "Expose as HomeKit light sensors",
+        "description": "Lightbulb + light sensor pair per register (lux = watts). Works on all Homebridge versions.",
+        "type": "boolean",
+        "default": true
+      },
+      "matter":{
+        "title": "Expose as Matter electrical sensors",
+        "description": "Requires Homebridge 2 with Matter enabled on this bridge. Only power registers are exposed.",
+        "type": "boolean",
+        "default": true
       }
     }
   }

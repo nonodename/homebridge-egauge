@@ -20,6 +20,15 @@ If it's working correctly, at night the lightbulb associated with the solar regi
 
 To control which registers are read, add a comma separated list of the registers in the 'Registers to Read' field of config. If left blank the first eight registers will be read.
 
+### Matter Electrical Sensors (Homebridge 2)
+
+On Homebridge 2 with Matter enabled for the bridge, each power register (type `P`) is also exposed as a Matter [Electrical Sensor](https://developers.homebridge.io/#/matter-device-type/ElectricalSensor) reporting active power. Controllers that support the device type (e.g. Apple Home on iOS 27) show the reading in watts; generating registers such as solar report negative power.
+
+Two options control what is exposed:
+
+* `matter` (default `true`): expose Matter electrical sensors. Ignored when Matter is unavailable or disabled.
+* `hap` (default `true`): expose the HomeKit lightbulb/light sensor pairs. Set to `false` to avoid duplicates once you've moved to the Matter sensors.
+
 Hat Tip to [Ryan Seddon](https://twitter.com/ryanseddon) for the [idea](https://ryanseddon.com/renewables/virtual-lightbulbs-solar-homekit/) of presenting the data using lightbulbs and light sensors. 
 
 ### Known issues
@@ -32,7 +41,7 @@ Hat Tip to [Ryan Seddon](https://twitter.com/ryanseddon) for the [idea](https://
 
 ### Setup Development Environment
 
-To develop Homebridge plugins you must have Node.js 18 or later installed, and a modern code editor such as [VS Code](https://code.visualstudio.com/). This plugin template uses [TypeScript](https://www.typescriptlang.org/) to make development easier and comes with pre-configured settings for [VS Code](https://code.visualstudio.com/) and ESLint. If you are using VS Code install these extensions:
+To develop Homebridge plugins you must have Node.js 22 or later installed, and a modern code editor such as [VS Code](https://code.visualstudio.com/). This plugin template uses [TypeScript](https://www.typescriptlang.org/) to make development easier and comes with pre-configured settings for [VS Code](https://code.visualstudio.com/) and ESLint. If you are using VS Code install these extensions:
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 
